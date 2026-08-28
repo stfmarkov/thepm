@@ -6,6 +6,9 @@
 # Standalone recreation brief (not part of this repo)
 docs/scaffold.md
 
+# Stitch exports (local design source, not shipped)
+/design/
+
 # `go build ./cmd/server`, `go build -o thepm`, Air
 /thepm
 /thepm.exe

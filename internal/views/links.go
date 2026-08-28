@@ -9,8 +9,8 @@ import (
 var LinkKinds = []string{"repo", "site", "hosting", "domain", "docs", "other"}
 
 var linkKindLabels = map[string]string{
-	"repo":    "Repo",
-	"site":    "Site",
+	"repo":    "Repository",
+	"site":    "Live site",
 	"hosting": "Hosting",
 	"domain":  "Domain",
 	"docs":    "Docs",

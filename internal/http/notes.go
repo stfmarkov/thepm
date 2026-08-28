@@ -107,5 +107,5 @@ func formatTime(t pgtype.Timestamptz) string {
 	if !t.Valid {
 		return ""
 	}
-	return t.Time.Local().Format("2006-01-02 15:04")
+	return t.Time.Local().Format("2006.01.02 15:04")
 }

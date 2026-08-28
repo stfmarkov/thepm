@@ -16,95 +16,112 @@ type Project struct {
 
 templ ProjectList(email string, csrf string, projects []Project) {
 	@Layout("Projects — thepm", true, email, csrf) {
-		<header>
-			<h1>Projects</h1>
-			<p><a href="/projects/new">New project</a></p>
-		</header>
-		if len(projects) == 0 {
-			<p>No projects yet.</p>
-		} else {
-			<div id="project-list">
-				for _, p := range projects {
-					@ProjectItem(csrf, p)
-				}
-			</div>
-		}
+		<div>
+			<header class="page-head">
+				<h1>Projects</h1>
+				<a class="btn-primary" href="/projects/new">New project</a>
+			</header>
+			if len(projects) == 0 {
+				<p class="empty">No projects yet.</p>
+			} else {
+				<div class="row-list" id="project-list">
+					for _, p := range projects {
+						@ProjectItem(csrf, p)
+					}
+				</div>
+			}
+		</div>
 	}
 }
 
 templ ProjectItem(csrf string, p Project) {
-	<article id={ "project-" + p.ID }>
-		<header>
-			<a href={ "/projects/" + p.ID }><strong>{ p.Name }</strong></a>
-			<small> { p.Status }</small>
-		</header>
-		if p.Summary != "" {
-			<p>{ p.Summary }</p>
-		}
-		<p>
-			<a href={ "/projects/" + p.ID + "/edit" }>Edit</a>
-		</p>
-		<form
-			method="post"
-			action={ "/projects/" + p.ID + "/delete" }
-			hx-post={ "/projects/" + p.ID + "/delete" }
-			hx-confirm="Delete this project?"
-			hx-target={ "#project-" + p.ID }
-			hx-swap="outerHTML"
-		>
-			<input type="hidden" name="csrf_token" value={ csrf }/>
-			<button type="submit" class="secondary">Delete</button>
-		</form>
+	<article class="row" id={ "project-" + p.ID }>
+		<div class="row-main">
+			<span class={ StatusChipClass(p.Status) }>{ StatusLabel(p.Status) }</span>
+			<a class={ TitleClass(p.Status) } href={ "/projects/" + p.ID }>{ p.Name }</a>
+			if p.Summary != "" {
+				<span class="row-summary">{ p.Summary }</span>
+			}
+		</div>
+		<div class="row-actions">
+			<a class="btn-text btn-sm" href={ "/projects/" + p.ID + "/edit" }>Edit</a>
+			<form
+				class="inline-form"
+				method="post"
+				action={ "/projects/" + p.ID + "/delete" }
+				hx-post={ "/projects/" + p.ID + "/delete" }
+				hx-confirm="Delete this project?"
+				hx-target={ "#project-" + p.ID }
+				hx-swap="outerHTML"
+			>
+				<input type="hidden" name="csrf_token" value={ csrf }/>
+				<button type="submit" class="btn-text btn-sm btn-danger">Delete</button>
+			</form>
+		</div>
 	</article>
 }
 
 templ ProjectNew(email string, csrf string, errMsg string, p Project) {
 	@Layout("New project — thepm", true, email, csrf) {
-		<h1>New project</h1>
-		@ProjectForm("/projects", csrf, errMsg, p, "Create")
+		<div>
+			<header class="page-head">
+				<h1>New project</h1>
+			</header>
+			@ProjectForm("/projects", csrf, errMsg, p, "Create")
+		</div>
 	}
 }
 
 templ ProjectDetail(email string, csrf string, p Project, links []Link, notes []Note, feedback []Feedback) {
 	@Layout(p.Name+" — thepm", true, email, csrf) {
-		<article>
-			<header>
-				<h1>{ p.Name }</h1>
-				<p><small>{ p.Status } · { p.Slug }</small></p>
-			</header>
-			if p.Stack != "" {
-				<p><strong>Stack</strong> { p.Stack }</p>
-			}
-			if p.Summary != "" {
-				<p>{ p.Summary }</p>
-			}
-			<p>
-				<a href={ "/projects/" + p.ID + "/edit" }>Edit</a>
-			</p>
-			<form method="post" action={ "/projects/" + p.ID + "/delete" } hx-confirm="Delete this project?">
-				<input type="hidden" name="csrf_token" value={ csrf }/>
-				<button type="submit" class="secondary">Delete</button>
-			</form>
-		</article>
+		<section class="project-hero">
+			<div class="hero-top">
+				<div>
+					<div class="hero-title-row">
+						<h1>{ p.Name }</h1>
+						<span class={ StatusChipClass(p.Status) }>{ p.Status } · { p.Slug }</span>
+					</div>
+					if p.Summary != "" {
+						<p class="lede">{ p.Summary }</p>
+					}
+					if p.Stack != "" {
+						<p class="kicker">Stack: { p.Stack }</p>
+					}
+				</div>
+				<div class="hero-actions">
+					<a class="btn-ghost" href={ "/projects/" + p.ID + "/edit" }>Edit</a>
+					<form class="inline-form" method="post" action={ "/projects/" + p.ID + "/delete" } hx-confirm="Delete this project?">
+						<input type="hidden" name="csrf_token" value={ csrf }/>
+						<button type="submit" class="btn-ghost btn-danger">Delete</button>
+					</form>
+				</div>
+			</div>
+		</section>
+		<hr class="section-rule"/>
 		@ProjectLinks(csrf, p.ID, links, "")
+		<hr class="section-rule"/>
 		@ProjectNotes(csrf, p.ID, notes, "")
+		<hr class="section-rule"/>
 		@ProjectFeedback(csrf, p, feedback, "")
-		<p><a href="/">All projects</a></p>
 	}
 }
 
 templ ProjectEdit(email string, csrf string, errMsg string, p Project) {
 	@Layout("Edit "+p.Name+" — thepm", true, email, csrf) {
-		<h1>Edit project</h1>
-		@ProjectForm("/projects/"+p.ID, csrf, errMsg, p, "Save")
+		<div>
+			<header class="page-head">
+				<h1>Edit project</h1>
+			</header>
+			@ProjectForm("/projects/"+p.ID, csrf, errMsg, p, "Save")
+		</div>
 	}
 }
 
 templ ProjectForm(action string, csrf string, errMsg string, p Project, submit string) {
 	if errMsg != "" {
-		<p role="alert">{ errMsg }</p>
+		<p class="alert" role="alert">{ errMsg }</p>
 	}
-	<form method="post" action={ action }>
+	<form class="stack" method="post" action={ action }>
 		<input type="hidden" name="csrf_token" value={ csrf }/>
 		<label>
 			Name
@@ -119,22 +136,24 @@ templ ProjectForm(action string, csrf string, errMsg string, p Project, submit s
 			<select name="status">
 				for _, st := range ProjectStatuses {
 					if st == p.Status {
-						<option value={ st } selected>{ st }</option>
+						<option value={ st } selected>{ StatusLabel(st) }</option>
 					} else {
-						<option value={ st }>{ st }</option>
+						<option value={ st }>{ StatusLabel(st) }</option>
 					}
 				}
 			</select>
 		</label>
 		<label>
 			Stack
-			<input type="text" name="stack" value={ p.Stack }/>
+			<input type="text" name="stack" value={ p.Stack } placeholder="Go, Postgres, Fly"/>
 		</label>
 		<label>
 			Summary
 			<textarea name="summary">{ p.Summary }</textarea>
 		</label>
-		<button type="submit">{ submit }</button>
-		<p><a href="/">Cancel</a></p>
+		<div class="form-actions">
+			<button class="btn-primary" type="submit">{ submit }</button>
+			<a class="btn-ghost" href="/">Cancel</a>
+		</div>
 	</form>
 }

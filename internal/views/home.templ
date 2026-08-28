@@ -2,7 +2,11 @@ package views
 
 templ Home(email string, csrf string) {
 	@Layout("thepm", true, email, csrf) {
-		<h1>Projects</h1>
-		<p>Signed in as { email }. The project list comes next.</p>
+		<div>
+			<header class="page-head">
+				<h1>Projects</h1>
+			</header>
+			<p class="empty">Signed in as { email }. The project list comes next.</p>
+		</div>
 	}
 }

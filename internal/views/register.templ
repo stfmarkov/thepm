@@ -1,27 +1,33 @@
 package views
 
 templ Register(csrf string, errMsg string) {
-	@Layout("Register — thepm", false, "", csrf) {
-		<h1>Create an account</h1>
+	@AuthLayout("Register — thepm") {
+		<header class="auth-brand">
+			<h1 class="logo">thepm</h1>
+			<p class="auth-lede">Create a new workspace.</p>
+		</header>
 		if errMsg != "" {
-			<p role="alert">{ errMsg }</p>
+			<p class="alert" role="alert">{ errMsg }</p>
 		}
-		<form method="post" action="/register">
+		<form class="stack" method="post" action="/register">
 			<input type="hidden" name="csrf_token" value={ csrf }/>
 			<label>
 				Email
-				<input type="email" name="email" required autocomplete="username"/>
+				<input type="email" name="email" required autocomplete="username" placeholder="name@example.com"/>
 			</label>
 			<label>
 				Password
-				<input type="password" name="password" required minlength="6" autocomplete="new-password"/>
+				<input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="••••••••"/>
 			</label>
 			<label>
 				Confirm password
-				<input type="password" name="password_confirm" required minlength="6" autocomplete="new-password"/>
+				<input type="password" name="password_confirm" required minlength="6" autocomplete="new-password" placeholder="••••••••"/>
 			</label>
-			<button type="submit">Register</button>
+			<button class="btn-primary" type="submit">Register</button>
 		</form>
-		<p><a href="/login">Already have an account?</a></p>
+		<p class="auth-switch">
+			Already have an account?
+			<a href="/login">Sign in</a>
+		</p>
 	}
 }

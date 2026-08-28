@@ -1,46 +1,50 @@
 package views
 
 templ ProjectNotes(csrf string, projectID string, notes []Note, errMsg string) {
-	<section id="project-notes">
+	<section class="section" id="project-notes">
 		<h2>Notes</h2>
 		if errMsg != "" {
-			<p role="alert">{ errMsg }</p>
+			<p class="alert" role="alert">{ errMsg }</p>
+		}
+		if len(notes) == 0 {
+			<p class="empty">No notes yet.</p>
+		} else {
+			<div class="stack-tight">
+				for _, n := range notes {
+					@NoteItem(csrf, n)
+				}
+			</div>
 		}
 		@NoteAddForm(csrf, projectID)
-		if len(notes) == 0 {
-			<p>No notes yet.</p>
-		} else {
-			for _, n := range notes {
-				@NoteItem(csrf, n)
-			}
-		}
 	</section>
 }
 
 templ NoteItem(csrf string, n Note) {
-	<article id={ "note-" + n.ID }>
+	<article class="row-note" id={ "note-" + n.ID }>
 		if n.CreatedAt != "" {
-			<header>
-				<small>{ n.CreatedAt }</small>
-			</header>
+			<time>{ n.CreatedAt }</time>
 		}
 		<p>{ n.Body }</p>
-		<form
-			method="post"
-			action={ "/projects/" + n.ProjectID + "/notes/" + n.ID + "/delete" }
-			hx-post={ "/projects/" + n.ProjectID + "/notes/" + n.ID + "/delete" }
-			hx-confirm="Delete this note?"
-			hx-target="#project-notes"
-			hx-swap="outerHTML"
-		>
-			<input type="hidden" name="csrf_token" value={ csrf }/>
-			<button type="submit" class="secondary">Delete</button>
-		</form>
+		<div class="row-actions">
+			<form
+				class="inline-form"
+				method="post"
+				action={ "/projects/" + n.ProjectID + "/notes/" + n.ID + "/delete" }
+				hx-post={ "/projects/" + n.ProjectID + "/notes/" + n.ID + "/delete" }
+				hx-confirm="Delete this note?"
+				hx-target="#project-notes"
+				hx-swap="outerHTML"
+			>
+				<input type="hidden" name="csrf_token" value={ csrf }/>
+				<button type="submit" class="btn-text btn-sm btn-danger">Delete</button>
+			</form>
+		</div>
 	</article>
 }
 
 templ NoteAddForm(csrf string, projectID string) {
 	<form
+		class="note-add"
 		method="post"
 		action={ "/projects/" + projectID + "/notes" }
 		hx-post={ "/projects/" + projectID + "/notes" }
@@ -50,8 +54,10 @@ templ NoteAddForm(csrf string, projectID string) {
 		<input type="hidden" name="csrf_token" value={ csrf }/>
 		<label>
 			Add a note
-			<textarea name="body" required></textarea>
+			<textarea name="body" required placeholder="Add a new note..."></textarea>
 		</label>
-		<button type="submit">Add</button>
+		<div class="form-actions">
+			<button class="btn-primary" type="submit">Save note</button>
+		</div>
 	</form>
 }

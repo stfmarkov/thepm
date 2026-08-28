@@ -1,39 +1,59 @@
 package views
 
 templ ProjectLinks(csrf string, projectID string, links []Link, errMsg string) {
-	<section id="project-links">
+	<section class="section" id="project-links">
 		<h2>Links</h2>
 		if errMsg != "" {
-			<p role="alert">{ errMsg }</p>
+			<p class="alert" role="alert">{ errMsg }</p>
 		}
 		if len(links) == 0 {
-			<p>No links yet.</p>
+			<p class="empty">No links yet.</p>
 		} else {
-			for _, g := range GroupLinks(links) {
-				<h3>{ LinkKindLabel(g.Kind) }</h3>
-				for _, l := range g.Links {
-					@LinkItem(csrf, l)
+			<div class="stack">
+				for _, g := range GroupLinks(links) {
+					<div class="group">
+						<h3>{ LinkKindLabel(g.Kind) }</h3>
+						<div class="row-list">
+							for _, l := range g.Links {
+								@LinkItem(csrf, l)
+							}
+						</div>
+					</div>
 				}
-			}
+			</div>
 		}
 		@LinkAddForm(csrf, projectID)
 	</section>
 }
 
 templ LinkItem(csrf string, l Link) {
-	<article id={ "link-" + l.ID }>
-		<p>
-			<a href={ LinkHref(l.URL) }>{ LinkTitle(l) }</a>
-			if l.Label != "" && l.URL != "" {
-				<small> { l.URL }</small>
-			}
-		</p>
+	<article class="item-block" id={ "link-" + l.ID }>
+		<div class="row">
+			<div class="row-main">
+				<a class="row-title" href={ LinkHref(l.URL) }>{ LinkTitle(l) }</a>
+			</div>
+			<div class="row-actions">
+				<form
+					class="inline-form"
+					method="post"
+					action={ "/projects/" + l.ProjectID + "/links/" + l.ID + "/delete" }
+					hx-post={ "/projects/" + l.ProjectID + "/links/" + l.ID + "/delete" }
+					hx-confirm="Delete this link?"
+					hx-target="#project-links"
+					hx-swap="outerHTML"
+				>
+					<input type="hidden" name="csrf_token" value={ csrf }/>
+					<button type="submit" class="btn-text btn-sm btn-danger">Delete</button>
+				</form>
+			</div>
+		</div>
 		if l.Notes != "" {
-			<p>{ l.Notes }</p>
+			<p class="muted">{ l.Notes }</p>
 		}
 		<details>
-			<summary>Edit</summary>
+			<summary class="btn-text btn-sm">Edit</summary>
 			<form
+				class="stack edit-panel"
 				method="post"
 				action={ "/projects/" + l.ProjectID + "/links/" + l.ID }
 				hx-post={ "/projects/" + l.ProjectID + "/links/" + l.ID }
@@ -66,25 +86,17 @@ templ LinkItem(csrf string, l Link) {
 					Notes
 					<textarea name="notes">{ l.Notes }</textarea>
 				</label>
-				<button type="submit">Save</button>
+				<div class="form-actions">
+					<button class="btn-primary" type="submit">Save</button>
+				</div>
 			</form>
 		</details>
-		<form
-			method="post"
-			action={ "/projects/" + l.ProjectID + "/links/" + l.ID + "/delete" }
-			hx-post={ "/projects/" + l.ProjectID + "/links/" + l.ID + "/delete" }
-			hx-confirm="Delete this link?"
-			hx-target="#project-links"
-			hx-swap="outerHTML"
-		>
-			<input type="hidden" name="csrf_token" value={ csrf }/>
-			<button type="submit" class="secondary">Delete</button>
-		</form>
 	</article>
 }
 
 templ LinkAddForm(csrf string, projectID string) {
 	<form
+		class="inline-fields link-add"
 		method="post"
 		action={ "/projects/" + projectID + "/links" }
 		hx-post={ "/projects/" + projectID + "/links" }
@@ -92,7 +104,6 @@ templ LinkAddForm(csrf string, projectID string) {
 		hx-swap="outerHTML"
 	>
 		<input type="hidden" name="csrf_token" value={ csrf }/>
-		<h3>Add a link</h3>
 		<label>
 			Kind
 			<select name="kind">
@@ -102,17 +113,17 @@ templ LinkAddForm(csrf string, projectID string) {
 			</select>
 		</label>
 		<label>
+			Label
+			<input type="text" name="label" placeholder="URL label"/>
+		</label>
+		<label>
 			URL
 			<input type="text" name="url" required placeholder="https://"/>
 		</label>
-		<label>
-			Label
-			<input type="text" name="label"/>
-		</label>
-		<label>
+		<button class="btn-primary" type="submit">Add link</button>
+		<label class="span-2">
 			Notes
 			<textarea name="notes"></textarea>
 		</label>
-		<button type="submit">Add</button>
 	</form>
 }

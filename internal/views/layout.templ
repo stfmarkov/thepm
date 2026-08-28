@@ -1,38 +1,59 @@
 package views
 
+templ documentHead(title string) {
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<title>{ title }</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com"/>
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+		<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+		<link rel="stylesheet" href="/static/app.css"/>
+		<script src="/static/htmx.min.js" defer></script>
+		<script src="/static/app.js" defer></script>
+	</head>
+}
+
 templ Layout(title string, signedIn bool, email string, csrf string) {
 	<!DOCTYPE html>
 	<html lang="en">
-		<head>
-			<meta charset="utf-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<title>{ title }</title>
-			<link rel="stylesheet" href="/static/pico.min.css"/>
-			<script src="/static/htmx.min.js" defer></script>
-		</head>
-		<body>
-			<header class="container">
-				<nav>
-					<ul>
-						<li><strong><a href="/">thepm</a></strong></li>
-					</ul>
-					<ul>
+		@documentHead(title)
+		<body class="app">
+			<header class="topbar">
+				<div class="topbar-inner">
+					<a class="logo" href="/">thepm</a>
+					<div class="topbar-end">
 						if signedIn {
-							<li><span>{ email }</span></li>
-							<li>
-								<form method="post" action="/logout">
-									<input type="hidden" name="csrf_token" value={ csrf }/>
-									<button type="submit">Sign out</button>
-								</form>
-							</li>
+							<span class="topbar-email">{ email }</span>
+							<form class="inline-form" method="post" action="/logout">
+								<input type="hidden" name="csrf_token" value={ csrf }/>
+								<button type="submit" class="btn-text">Sign out</button>
+							</form>
 						} else {
-							<li><a href="/login">Sign in</a></li>
-							<li><a href="/register">Register</a></li>
+							<a class="btn-text" href="/login">Sign in</a>
+							<a class="btn-text" href="/register">Register</a>
 						}
-					</ul>
-				</nav>
+					</div>
+				</div>
 			</header>
-			<main class="container">
+			<main class="canvas">
+				{ children... }
+			</main>
+			<footer class="site-footer">
+				<div class="site-footer-inner">
+					<span class="logo">thepm</span>
+				</div>
+			</footer>
+		</body>
+	</html>
+}
+
+templ AuthLayout(title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		@documentHead(title)
+		<body class="auth">
+			<main class="auth-main">
 				{ children... }
 			</main>
 		</body>

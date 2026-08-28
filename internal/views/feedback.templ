@@ -1,40 +1,46 @@
 package views
 
 templ ProjectFeedback(csrf string, p Project, items []Feedback, errMsg string) {
-	<section id="project-feedback">
-		<h2>Feedback</h2>
+	<section class="section" id="project-feedback">
+		<h2>Feedback inbox</h2>
 		if errMsg != "" {
-			<p role="alert">{ errMsg }</p>
+			<p class="alert" role="alert">{ errMsg }</p>
 		}
 		@FeedbackIngest(csrf, p)
 		@FeedbackAddForm(csrf, p.ID)
 		if len(items) == 0 {
-			<p>No feedback yet.</p>
+			<p class="empty">No feedback yet.</p>
 		} else {
-			for _, f := range items {
-				@FeedbackItem(csrf, f)
-			}
+			<div class="row-list">
+				for _, f := range items {
+					@FeedbackItem(csrf, f)
+				}
+			</div>
 		}
 	</section>
 }
 
 templ FeedbackIngest(csrf string, p Project) {
-	<article>
-		<h3>Ingest</h3>
-		<p>Other sites POST here. They need the project id and the key. Optional website limits browser Origin.</p>
-		<label>
-			Project ID
-			<input type="text" readonly value={ p.ID }/>
-		</label>
-		<label>
-			Ingest URL
-			<input type="text" readonly value={ p.IngestURL }/>
-		</label>
-		<label>
-			Ingest key
-			<input type="text" readonly value={ p.FeedbackIngestKey }/>
-		</label>
+	<div class="panel">
+		<h3>API ingest credentials</h3>
+		<p class="muted">Other sites POST here. They need the project id and the key. Optional website limits browser Origin.</p>
+		<div class="copy-row">
+			<span>Project ID</span>
+			<input id="ingest-project-id" type="text" readonly value={ p.ID }/>
+			<button type="button" class="btn-text btn-sm" data-copy-target="ingest-project-id">Copy</button>
+		</div>
+		<div class="copy-row">
+			<span>Endpoint</span>
+			<input id="ingest-url" type="text" readonly value={ p.IngestURL }/>
+			<button type="button" class="btn-text btn-sm" data-copy-target="ingest-url">Copy</button>
+		</div>
+		<div class="copy-row">
+			<span>Key</span>
+			<input id="ingest-key" type="text" readonly value={ p.FeedbackIngestKey }/>
+			<button type="button" class="btn-text btn-sm" data-copy-target="ingest-key">Copy</button>
+		</div>
 		<form
+			class="stack-tight"
 			method="post"
 			action={ "/projects/" + p.ID + "/ingest-origin" }
 			hx-post={ "/projects/" + p.ID + "/ingest-origin" }
@@ -46,7 +52,9 @@ templ FeedbackIngest(csrf string, p Project) {
 				Website
 				<input type="text" name="origin" value={ p.FeedbackOrigin } placeholder="https://myapp.com"/>
 			</label>
-			<button type="submit">Save website</button>
+			<div class="form-actions">
+				<button class="btn-primary" type="submit">Save website</button>
+			</div>
 		</form>
 		<form
 			method="post"
@@ -57,43 +65,47 @@ templ FeedbackIngest(csrf string, p Project) {
 			hx-swap="outerHTML"
 		>
 			<input type="hidden" name="csrf_token" value={ csrf }/>
-			<button type="submit" class="secondary">Rotate key</button>
+			<button type="submit" class="btn-ghost btn-danger">Rotate key</button>
 		</form>
-	</article>
+	</div>
 }
 
 templ FeedbackItem(csrf string, f Feedback) {
-	<article id={ "feedback-" + f.ID }>
+	<article class="feedback-item" id={ "feedback-" + f.ID }>
 		<header>
+			<span class={ FeedbackSourceClass(f.Source) }>{ f.Source }</span>
 			<strong>{ f.AuthorName }</strong>
 			if f.AuthorEmail != "" {
-				<small> { f.AuthorEmail }</small>
+				<span class="muted">{ f.AuthorEmail }</span>
 			}
-			<small> · { f.Source }</small>
 			if f.ReceivedAt != "" {
-				<small> · { f.ReceivedAt }</small>
+				<span class="kicker">{ f.ReceivedAt }</span>
 			}
 			if f.Rating != "" {
-				<small> · { f.Rating }/5</small>
+				<span class="chip chip-rating">{ f.Rating }/5</span>
 			}
+			<div class="row-actions">
+				<form
+					class="inline-form"
+					method="post"
+					action={ "/projects/" + f.ProjectID + "/feedback/" + f.ID + "/delete" }
+					hx-post={ "/projects/" + f.ProjectID + "/feedback/" + f.ID + "/delete" }
+					hx-confirm="Delete this feedback?"
+					hx-target="#project-feedback"
+					hx-swap="outerHTML"
+				>
+					<input type="hidden" name="csrf_token" value={ csrf }/>
+					<button type="submit" class="btn-text btn-sm btn-danger">Delete</button>
+				</form>
+			</div>
 		</header>
 		<p>{ f.Message }</p>
-		<form
-			method="post"
-			action={ "/projects/" + f.ProjectID + "/feedback/" + f.ID + "/delete" }
-			hx-post={ "/projects/" + f.ProjectID + "/feedback/" + f.ID + "/delete" }
-			hx-confirm="Delete this feedback?"
-			hx-target="#project-feedback"
-			hx-swap="outerHTML"
-		>
-			<input type="hidden" name="csrf_token" value={ csrf }/>
-			<button type="submit" class="secondary">Delete</button>
-		</form>
 	</article>
 }
 
 templ FeedbackAddForm(csrf string, projectID string) {
 	<form
+		class="inline-fields feedback-add"
 		method="post"
 		action={ "/projects/" + projectID + "/feedback" }
 		hx-post={ "/projects/" + projectID + "/feedback" }
@@ -101,7 +113,6 @@ templ FeedbackAddForm(csrf string, projectID string) {
 		hx-swap="outerHTML"
 	>
 		<input type="hidden" name="csrf_token" value={ csrf }/>
-		<h3>Add feedback</h3>
 		<label>
 			Name
 			<input type="text" name="name" required/>
@@ -110,9 +121,9 @@ templ FeedbackAddForm(csrf string, projectID string) {
 			Email
 			<input type="email" name="email"/>
 		</label>
-		<label>
+		<label class="span-2">
 			Message
-			<textarea name="message" required></textarea>
+			<textarea name="message" required placeholder="Quick manual feedback entry..."></textarea>
 		</label>
 		<label>
 			Rating
@@ -123,6 +134,8 @@ templ FeedbackAddForm(csrf string, projectID string) {
 				}
 			</select>
 		</label>
-		<button type="submit">Add</button>
+		<div class="form-actions">
+			<button class="btn-primary" type="submit">Add</button>
+		</div>
 	</form>
 }
