@@ -15,7 +15,7 @@ Stand up the hosted project, CLI, Auth (email + password only), and the first sc
 - [x] Copy these values somewhere local and gitignored (not into the repo):
   - Project URL and anon (public) key — Go uses these when calling Auth (email + password)
   - Service role key — keep off the request path; do not put it in the browser
-  - Database connection string (direct, for migrations) and pooler URI (for the deployed Go app)
+  - `SUPABASE_CONNECTION_STRING` (direct) and `SUPABASE_POOLER_STRING` (fallback if the direct host cannot be reached)
 
 
 
@@ -90,7 +90,7 @@ Empty module, runnable server, HTML layout. No features yet.
 
 - [x] `go mod init` for this repo
 - [x] Folders: `cmd/server`, `internal/http`, `internal/auth`, `internal/db`, `internal/views`, `static`
-- [x] `.env.example` with `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SESSION_SECRET`, `ADDR`
+- [x] `.env.example` with `SUPABASE_CONNECTION_STRING`, `SUPABASE_POOLER_STRING`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SESSION_SECRET`, `ADDR`
 - [x] `.gitignore` for binaries, `.env`, templ/sqlc generated if we choose not to commit them (prefer committing generated Go)
 
 
@@ -119,7 +119,7 @@ Empty module, runnable server, HTML layout. No features yet.
 ## 3. Database access from Go
 
 - [x] `sqlc` config pointed at `supabase/migrations` (schema) and `internal/db/queries`
-- [x] pgx pool from `DATABASE_URL` (pooler URI in production)
+- [x] pgx pool from `SUPABASE_CONNECTION_STRING`, falling back to `SUPABASE_POOLER_STRING`
 - [x] One smoke query (for example, count projects for a fake user) so a bad URL fails at boot
 - [x] Commit generated sqlc code
 
@@ -174,9 +174,9 @@ All writes scoped by `user_id`. HTMX swaps the section that changed.
 
 ### 5.2 Links (stack, hosting, domain, URLs)
 
-- [ ] List links on the project page, grouped by kind
-- [ ] Add / edit / delete a link (url, label, notes)
-- [ ] Kinds include at least: repo, site, hosting dashboard, domain/registrar, docs, other
+- [x] List links on the project page, grouped by kind
+- [x] Add / edit / delete a link (url, label, notes)
+- [x] Kinds include at least: repo, site, hosting dashboard, domain/registrar, docs, other
 
 
 
@@ -231,7 +231,7 @@ Unauthenticated JSON. Called by forms on other apps. Field names can stay flexib
 - [ ] Secure cookies, HTTPS
 - [ ] Confirm register, login, and logout on the production origin
 - [ ] Deploy the Go binary (Fly, Railway, Render, or a VPS — decide at deploy time)
-- [ ] `DATABASE_URL` uses the pooler
+- [ ] `SUPABASE_POOLER_STRING` is set so boot can fall back on IPv4-only networks
 - [ ] Smoke test: two browsers, two users, no cross-visible rows
 - [ ] Smoke test: POST ingest with a real project id + key from another origin; row appears in the inbox
 - [ ] Smoke test: wrong key does not create a row and does not reveal whether the project id exists

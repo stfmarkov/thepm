@@ -73,4 +73,4 @@ Do not use implicit-flow tricks, supabase-js, or the operator's cookies on this 
 
 ## Rule
 
-The thepm UI talks only to Go. Other apps may `POST` JSON to the ingest endpoint. Go talks to Supabase Auth over the Auth HTTP API (anon key), and to Postgres over `DATABASE_URL`.
+The thepm UI talks only to Go. Other apps may `POST` JSON to the ingest endpoint. Go talks to Supabase Auth over the Auth HTTP API (anon key), and to Postgres over `SUPABASE_CONNECTION_STRING` (falling back to `SUPABASE_POOLER_STRING`).

@@ -1,0 +1,118 @@
+package views
+
+templ ProjectLinks(csrf string, projectID string, links []Link, errMsg string) {
+	<section id="project-links">
+		<h2>Links</h2>
+		if errMsg != "" {
+			<p role="alert">{ errMsg }</p>
+		}
+		if len(links) == 0 {
+			<p>No links yet.</p>
+		} else {
+			for _, g := range GroupLinks(links) {
+				<h3>{ LinkKindLabel(g.Kind) }</h3>
+				for _, l := range g.Links {
+					@LinkItem(csrf, l)
+				}
+			}
+		}
+		@LinkAddForm(csrf, projectID)
+	</section>
+}
+
+templ LinkItem(csrf string, l Link) {
+	<article id={ "link-" + l.ID }>
+		<p>
+			<a href={ LinkHref(l.URL) }>{ LinkTitle(l) }</a>
+			if l.Label != "" && l.URL != "" {
+				<small> { l.URL }</small>
+			}
+		</p>
+		if l.Notes != "" {
+			<p>{ l.Notes }</p>
+		}
+		<details>
+			<summary>Edit</summary>
+			<form
+				method="post"
+				action={ "/projects/" + l.ProjectID + "/links/" + l.ID }
+				hx-post={ "/projects/" + l.ProjectID + "/links/" + l.ID }
+				hx-confirm="Save this link?"
+				hx-target="#project-links"
+				hx-swap="outerHTML"
+			>
+				<input type="hidden" name="csrf_token" value={ csrf }/>
+				<label>
+					Kind
+					<select name="kind">
+						for _, k := range LinkKinds {
+							if k == l.Kind {
+								<option value={ k } selected>{ LinkKindLabel(k) }</option>
+							} else {
+								<option value={ k }>{ LinkKindLabel(k) }</option>
+							}
+						}
+					</select>
+				</label>
+				<label>
+					URL
+					<input type="text" name="url" required value={ l.URL }/>
+				</label>
+				<label>
+					Label
+					<input type="text" name="label" value={ l.Label }/>
+				</label>
+				<label>
+					Notes
+					<textarea name="notes">{ l.Notes }</textarea>
+				</label>
+				<button type="submit">Save</button>
+			</form>
+		</details>
+		<form
+			method="post"
+			action={ "/projects/" + l.ProjectID + "/links/" + l.ID + "/delete" }
+			hx-post={ "/projects/" + l.ProjectID + "/links/" + l.ID + "/delete" }
+			hx-confirm="Delete this link?"
+			hx-target="#project-links"
+			hx-swap="outerHTML"
+		>
+			<input type="hidden" name="csrf_token" value={ csrf }/>
+			<button type="submit" class="secondary">Delete</button>
+		</form>
+	</article>
+}
+
+templ LinkAddForm(csrf string, projectID string) {
+	<form
+		method="post"
+		action={ "/projects/" + projectID + "/links" }
+		hx-post={ "/projects/" + projectID + "/links" }
+		hx-target="#project-links"
+		hx-swap="outerHTML"
+	>
+		<input type="hidden" name="csrf_token" value={ csrf }/>
+		<h3>Add a link</h3>
+		<label>
+			Kind
+			<select name="kind">
+				for _, k := range LinkKinds {
+					<option value={ k }>{ LinkKindLabel(k) }</option>
+				}
+			</select>
+		</label>
+		<label>
+			URL
+			<input type="text" name="url" required placeholder="https://"/>
+		</label>
+		<label>
+			Label
+			<input type="text" name="label"/>
+		</label>
+		<label>
+			Notes
+			<textarea name="notes"></textarea>
+		</label>
+		<button type="submit">Add</button>
+	</form>
+}

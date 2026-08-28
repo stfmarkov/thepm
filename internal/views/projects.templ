@@ -62,7 +62,7 @@ templ ProjectNew(email string, csrf string, errMsg string, p Project) {
 	}
 }
 
-templ ProjectDetail(email string, csrf string, p Project) {
+templ ProjectDetail(email string, csrf string, p Project, links []Link) {
 	@Layout(p.Name+" — thepm", true, email, csrf) {
 		<article>
 			<header>
@@ -83,6 +83,7 @@ templ ProjectDetail(email string, csrf string, p Project) {
 				<button type="submit" class="secondary">Delete</button>
 			</form>
 		</article>
+		@ProjectLinks(csrf, p.ID, links, "")
 		<p><a href="/">All projects</a></p>
 	}
 }

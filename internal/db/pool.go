@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -10,18 +11,33 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func DatabaseURL() string {
-	if u := strings.TrimSpace(os.Getenv("DATABASE_URL")); u != "" {
-		return u
+func Open(ctx context.Context) (*pgxpool.Pool, error) {
+	primary := strings.TrimSpace(os.Getenv("SUPABASE_CONNECTION_STRING"))
+	fallback := strings.TrimSpace(os.Getenv("SUPABASE_POOLER_STRING"))
+	if primary == "" && fallback == "" {
+		return nil, fmt.Errorf("SUPABASE_CONNECTION_STRING or SUPABASE_POOLER_STRING is required")
 	}
-	return strings.TrimSpace(os.Getenv("SUPABASE_CONNECTION_STRING"))
+
+	if primary != "" {
+		pool, err := connect(ctx, primary)
+		if err == nil {
+			return pool, nil
+		}
+		if fallback == "" {
+			return nil, fmt.Errorf("database ping: %w", err)
+		}
+		log.Printf("direct connection failed, trying pooler: %v", err)
+	}
+
+	pool, err := connect(ctx, fallback)
+	if err != nil {
+		return nil, fmt.Errorf("database ping: %w", err)
+	}
+	return pool, nil
 }
 
-func Open(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
-	if databaseURL == "" {
-		return nil, fmt.Errorf("DATABASE_URL is required")
-	}
-	cfg, err := pgxpool.ParseConfig(databaseURL)
+func connect(ctx context.Context, connString string) (*pgxpool.Pool, error) {
+	cfg, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +49,7 @@ func Open(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	defer cancel()
 	if _, err := New(pool).Ping(pingCtx); err != nil {
 		pool.Close()
-		return nil, fmt.Errorf("database ping: %w", err)
+		return nil, err
 	}
 	return pool, nil
 }

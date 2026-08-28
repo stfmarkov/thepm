@@ -30,7 +30,7 @@ func New() (*gin.Engine, error) {
 		return nil, errMissingAuthEnv
 	}
 
-	pool, err := db.Open(context.Background(), db.DatabaseURL())
+	pool, err := db.Open(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +66,9 @@ func New() (*gin.Engine, error) {
 	authed.GET("/projects/:id/edit", s.editProject)
 	authed.POST("/projects/:id", s.updateProject)
 	authed.POST("/projects/:id/delete", s.deleteProject)
+	authed.POST("/projects/:id/links", s.createLink)
+	authed.POST("/projects/:id/links/:link_id", s.updateLink)
+	authed.POST("/projects/:id/links/:link_id/delete", s.deleteLink)
 
 	return r, nil
 }
