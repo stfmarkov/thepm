@@ -1,0 +1,128 @@
+package views
+
+templ ProjectFeedback(csrf string, p Project, items []Feedback, errMsg string) {
+	<section id="project-feedback">
+		<h2>Feedback</h2>
+		if errMsg != "" {
+			<p role="alert">{ errMsg }</p>
+		}
+		@FeedbackIngest(csrf, p)
+		@FeedbackAddForm(csrf, p.ID)
+		if len(items) == 0 {
+			<p>No feedback yet.</p>
+		} else {
+			for _, f := range items {
+				@FeedbackItem(csrf, f)
+			}
+		}
+	</section>
+}
+
+templ FeedbackIngest(csrf string, p Project) {
+	<article>
+		<h3>Ingest</h3>
+		<p>Other sites POST here. They need the project id and the key. Optional website limits browser Origin.</p>
+		<label>
+			Project ID
+			<input type="text" readonly value={ p.ID }/>
+		</label>
+		<label>
+			Ingest URL
+			<input type="text" readonly value={ p.IngestURL }/>
+		</label>
+		<label>
+			Ingest key
+			<input type="text" readonly value={ p.FeedbackIngestKey }/>
+		</label>
+		<form
+			method="post"
+			action={ "/projects/" + p.ID + "/ingest-origin" }
+			hx-post={ "/projects/" + p.ID + "/ingest-origin" }
+			hx-target="#project-feedback"
+			hx-swap="outerHTML"
+		>
+			<input type="hidden" name="csrf_token" value={ csrf }/>
+			<label>
+				Website
+				<input type="text" name="origin" value={ p.FeedbackOrigin } placeholder="https://myapp.com"/>
+			</label>
+			<button type="submit">Save website</button>
+		</form>
+		<form
+			method="post"
+			action={ "/projects/" + p.ID + "/ingest-key/rotate" }
+			hx-post={ "/projects/" + p.ID + "/ingest-key/rotate" }
+			hx-confirm="Rotate the ingest key? Existing forms will stop working."
+			hx-target="#project-feedback"
+			hx-swap="outerHTML"
+		>
+			<input type="hidden" name="csrf_token" value={ csrf }/>
+			<button type="submit" class="secondary">Rotate key</button>
+		</form>
+	</article>
+}
+
+templ FeedbackItem(csrf string, f Feedback) {
+	<article id={ "feedback-" + f.ID }>
+		<header>
+			<strong>{ f.AuthorName }</strong>
+			if f.AuthorEmail != "" {
+				<small> { f.AuthorEmail }</small>
+			}
+			<small> · { f.Source }</small>
+			if f.ReceivedAt != "" {
+				<small> · { f.ReceivedAt }</small>
+			}
+			if f.Rating != "" {
+				<small> · { f.Rating }/5</small>
+			}
+		</header>
+		<p>{ f.Message }</p>
+		<form
+			method="post"
+			action={ "/projects/" + f.ProjectID + "/feedback/" + f.ID + "/delete" }
+			hx-post={ "/projects/" + f.ProjectID + "/feedback/" + f.ID + "/delete" }
+			hx-confirm="Delete this feedback?"
+			hx-target="#project-feedback"
+			hx-swap="outerHTML"
+		>
+			<input type="hidden" name="csrf_token" value={ csrf }/>
+			<button type="submit" class="secondary">Delete</button>
+		</form>
+	</article>
+}
+
+templ FeedbackAddForm(csrf string, projectID string) {
+	<form
+		method="post"
+		action={ "/projects/" + projectID + "/feedback" }
+		hx-post={ "/projects/" + projectID + "/feedback" }
+		hx-target="#project-feedback"
+		hx-swap="outerHTML"
+	>
+		<input type="hidden" name="csrf_token" value={ csrf }/>
+		<h3>Add feedback</h3>
+		<label>
+			Name
+			<input type="text" name="name" required/>
+		</label>
+		<label>
+			Email
+			<input type="email" name="email"/>
+		</label>
+		<label>
+			Message
+			<textarea name="message" required></textarea>
+		</label>
+		<label>
+			Rating
+			<select name="rating">
+				<option value="">None</option>
+				for _, r := range FeedbackRatings {
+					<option value={ r }>{ r }</option>
+				}
+			</select>
+		</label>
+		<button type="submit">Add</button>
+	</form>
+}

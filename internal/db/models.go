@@ -55,6 +55,8 @@ type Project struct {
 	FeedbackIngestKey string
 	CreatedAt         pgtype.Timestamptz
 	UpdatedAt         pgtype.Timestamptz
+	// Origin of the embedding site (scheme + host), e.g. https://myapp.com. Empty allows any origin.
+	FeedbackOrigin string
 }
 
 type RoadmapItem struct {

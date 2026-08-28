@@ -3,12 +3,15 @@ package views
 var ProjectStatuses = []string{"active", "paused", "shipped", "archived"}
 
 type Project struct {
-	ID      string
-	Name    string
-	Slug    string
-	Status  string
-	Stack   string
-	Summary string
+	ID                string
+	Name              string
+	Slug              string
+	Status            string
+	Stack             string
+	Summary           string
+	FeedbackIngestKey string
+	FeedbackOrigin    string
+	IngestURL         string
 }
 
 templ ProjectList(email string, csrf string, projects []Project) {
@@ -62,7 +65,7 @@ templ ProjectNew(email string, csrf string, errMsg string, p Project) {
 	}
 }
 
-templ ProjectDetail(email string, csrf string, p Project, links []Link, notes []Note) {
+templ ProjectDetail(email string, csrf string, p Project, links []Link, notes []Note, feedback []Feedback) {
 	@Layout(p.Name+" — thepm", true, email, csrf) {
 		<article>
 			<header>
@@ -85,6 +88,7 @@ templ ProjectDetail(email string, csrf string, p Project, links []Link, notes []
 		</article>
 		@ProjectLinks(csrf, p.ID, links, "")
 		@ProjectNotes(csrf, p.ID, notes, "")
+		@ProjectFeedback(csrf, p, feedback, "")
 		<p><a href="/">All projects</a></p>
 	}
 }

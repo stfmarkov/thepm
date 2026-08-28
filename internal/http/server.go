@@ -49,6 +49,11 @@ func New() (*gin.Engine, error) {
 	r.StaticFS("/static", http.FS(static.FS))
 	r.GET("/health", health)
 
+	ingest := r.Group("/api/v1/projects/:project_id/feedback")
+	ingest.Use(s.ingestCORS, s.limitIngest)
+	ingest.OPTIONS("", func(c *gin.Context) {})
+	ingest.POST("", s.ingestFeedback)
+
 	public := r.Group("/")
 	public.Use(s.ensureCSRF, s.requireCSRF)
 	public.GET("/login", s.showLogin)
@@ -71,6 +76,10 @@ func New() (*gin.Engine, error) {
 	authed.POST("/projects/:id/links/:link_id/delete", s.deleteLink)
 	authed.POST("/projects/:id/notes", s.createNote)
 	authed.POST("/projects/:id/notes/:note_id/delete", s.deleteNote)
+	authed.POST("/projects/:id/feedback", s.createFeedback)
+	authed.POST("/projects/:id/feedback/:feedback_id/delete", s.deleteFeedback)
+	authed.POST("/projects/:id/ingest-origin", s.updateFeedbackOrigin)
+	authed.POST("/projects/:id/ingest-key/rotate", s.rotateFeedbackIngestKey)
 
 	return r, nil
 }

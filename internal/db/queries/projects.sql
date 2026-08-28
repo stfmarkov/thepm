@@ -29,3 +29,21 @@ RETURNING *;
 -- name: DeleteProject :execrows
 DELETE FROM projects
 WHERE id = $1 AND user_id = $2;
+
+-- name: GetProjectByIngest :one
+SELECT * FROM projects
+WHERE id = $1 AND feedback_ingest_key = $2;
+
+-- name: UpdateFeedbackOrigin :one
+UPDATE projects
+SET feedback_origin = $3,
+    updated_at = now()
+WHERE id = $1 AND user_id = $2
+RETURNING *;
+
+-- name: RotateFeedbackIngestKey :one
+UPDATE projects
+SET feedback_ingest_key = replace(gen_random_uuid()::text, '-', ''),
+    updated_at = now()
+WHERE id = $1 AND user_id = $2
+RETURNING *;

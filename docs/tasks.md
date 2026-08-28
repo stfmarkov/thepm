@@ -75,7 +75,7 @@ Create `supabase/migrations/<timestamp>_init.sql`. Every table is multi-user fro
 ### 1.7 Row ownership (v1 vs later)
 
 - [x] Signed-in UI: every sqlc query takes `user_id` from the verified Auth session (`sub`). Never load a row by id alone
-- [ ] Public ingest: look up the project by `id` + `feedback_ingest_key`, then insert feedback with **that project's** `user_id` (the owner). No session
+- [x] Public ingest: look up the project by `id` + `feedback_ingest_key`, then insert feedback with **that project's** `user_id` (the owner). No session
 - [ ] Later: RLS as a second fence, on a database role that does not bypass RLS. Do not treat the `postgres` / service connection as proof that RLS is working
 
 ---
@@ -190,11 +190,11 @@ All writes scoped by `user_id`. HTMX swaps the section that changed.
 
 ### 5.4 Feedback inbox (signed-in UI)
 
-- [ ] List feedback on the project page (name, email if present, message, rating, source, date)
-- [ ] Manually add a row (same fields) for feedback you heard elsewhere
-- [ ] Delete a row
-- [ ] Show the ingest URL, project id, and ingest key on the project page (copyable)
-- [ ] Rotate ingest key (`hx-confirm`); old forms stop working
+- [x] List feedback on the project page (name, email if present, message, rating, source, date)
+- [x] Manually add a row (same fields) for feedback you heard elsewhere
+- [x] Delete a row
+- [x] Show the ingest URL, project id, and ingest key on the project page (copyable)
+- [x] Rotate ingest key (`hx-confirm`); old forms stop working
 
 
 
@@ -202,17 +202,17 @@ All writes scoped by `user_id`. HTMX swaps the section that changed.
 
 Unauthenticated JSON. Called by forms on other apps. Field names can stay flexible until the form is designed; validate what we accept.
 
-- [ ] `POST /api/v1/projects/:project_id/feedback`
-- [ ] Require ingest key (header `X-Feedback-Key` or body field — pick one and document it)
-- [ ] Lookup project by id **and** key; 404 if either is wrong (do not leak which)
-- [ ] Accept JSON body, likely: `name`, `email` (optional), `message`, `rating` (optional 1–5)
-- [ ] Reject empty message, overlong strings, rating outside 1–5
-- [ ] Insert with that project's `user_id` (the owner), `source = ingest`
-- [ ] CORS on this route so a browser form on another origin can POST (v1: allow all origins, or a per-project origin list later)
-- [ ] No session cookie, no CSRF token, no supabase-js
-- [ ] Rate-limit per IP and per project
-- [ ] Return a small JSON success/error body the embedding form can display
-- [ ] Document the contract in `docs/` once the field names are locked (snippet the other apps will copy)
+- [x] `POST /api/v1/projects/:project_id/feedback`
+- [x] Require ingest key (header `X-Feedback-Key` or body field — pick one and document it)
+- [x] Lookup project by id **and** key; 404 if either is wrong (do not leak which)
+- [x] Accept JSON body, likely: `name`, `email` (optional), `message`, `rating` (optional 1–5)
+- [x] Reject empty message, overlong strings, rating outside 1–5
+- [x] Insert with that project's `user_id` (the owner), `source = ingest`
+- [x] CORS on this route so a browser form on another origin can POST (v1: allow all origins, or a per-project origin list later)
+- [x] No session cookie, no CSRF token, no supabase-js
+- [x] Rate-limit per IP and per project
+- [x] Return a small JSON success/error body the embedding form can display
+- [x] Document the contract in `docs/` once the field names are locked (snippet the other apps will copy)
 
 
 

@@ -88,8 +88,13 @@ func (s *Server) showProject(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
+	feedback, err := s.loadProjectFeedback(c, p.ID, p.UserID)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
 	u := currentUser(c)
-	Render(c, http.StatusOK, views.ProjectDetail(u.Email, csrfFrom(c), toView(p), links, notes))
+	Render(c, http.StatusOK, views.ProjectDetail(u.Email, csrfFrom(c), toDetailView(c, p), links, notes, feedback))
 }
 
 func (s *Server) editProject(c *gin.Context) {
@@ -197,12 +202,14 @@ func projectFromForm(c *gin.Context) views.Project {
 
 func toView(p db.Project) views.Project {
 	return views.Project{
-		ID:      uuidStr(p.ID),
-		Name:    p.Name,
-		Slug:    p.Slug,
-		Status:  p.Status,
-		Stack:   p.Stack,
-		Summary: p.Summary,
+		ID:                uuidStr(p.ID),
+		Name:              p.Name,
+		Slug:              p.Slug,
+		Status:            p.Status,
+		Stack:             p.Stack,
+		Summary:           p.Summary,
+		FeedbackIngestKey: p.FeedbackIngestKey,
+		FeedbackOrigin:    p.FeedbackOrigin,
 	}
 }
 

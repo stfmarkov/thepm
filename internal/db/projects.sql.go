@@ -14,7 +14,7 @@ import (
 const createProject = `-- name: CreateProject :one
 INSERT INTO projects (user_id, name, slug, status, stack, summary)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at
+RETURNING id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at, feedback_origin
 `
 
 type CreateProjectParams struct {
@@ -47,6 +47,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.FeedbackIngestKey,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.FeedbackOrigin,
 	)
 	return i, err
 }
@@ -70,7 +71,7 @@ func (q *Queries) DeleteProject(ctx context.Context, arg DeleteProjectParams) (i
 }
 
 const getProject = `-- name: GetProject :one
-SELECT id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at FROM projects
+SELECT id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at, feedback_origin FROM projects
 WHERE id = $1 AND user_id = $2
 `
 
@@ -93,12 +94,42 @@ func (q *Queries) GetProject(ctx context.Context, arg GetProjectParams) (Project
 		&i.FeedbackIngestKey,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.FeedbackOrigin,
+	)
+	return i, err
+}
+
+const getProjectByIngest = `-- name: GetProjectByIngest :one
+SELECT id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at, feedback_origin FROM projects
+WHERE id = $1 AND feedback_ingest_key = $2
+`
+
+type GetProjectByIngestParams struct {
+	ID                pgtype.UUID
+	FeedbackIngestKey string
+}
+
+func (q *Queries) GetProjectByIngest(ctx context.Context, arg GetProjectByIngestParams) (Project, error) {
+	row := q.db.QueryRow(ctx, getProjectByIngest, arg.ID, arg.FeedbackIngestKey)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Slug,
+		&i.Status,
+		&i.Stack,
+		&i.Summary,
+		&i.FeedbackIngestKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.FeedbackOrigin,
 	)
 	return i, err
 }
 
 const listProjects = `-- name: ListProjects :many
-SELECT id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at FROM projects
+SELECT id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at, feedback_origin FROM projects
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -123,6 +154,7 @@ func (q *Queries) ListProjects(ctx context.Context, userID pgtype.UUID) ([]Proje
 			&i.FeedbackIngestKey,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.FeedbackOrigin,
 		); err != nil {
 			return nil, err
 		}
@@ -145,6 +177,71 @@ func (q *Queries) Ping(ctx context.Context) (int32, error) {
 	return column_1, err
 }
 
+const rotateFeedbackIngestKey = `-- name: RotateFeedbackIngestKey :one
+UPDATE projects
+SET feedback_ingest_key = replace(gen_random_uuid()::text, '-', ''),
+    updated_at = now()
+WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at, feedback_origin
+`
+
+type RotateFeedbackIngestKeyParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
+
+func (q *Queries) RotateFeedbackIngestKey(ctx context.Context, arg RotateFeedbackIngestKeyParams) (Project, error) {
+	row := q.db.QueryRow(ctx, rotateFeedbackIngestKey, arg.ID, arg.UserID)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Slug,
+		&i.Status,
+		&i.Stack,
+		&i.Summary,
+		&i.FeedbackIngestKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.FeedbackOrigin,
+	)
+	return i, err
+}
+
+const updateFeedbackOrigin = `-- name: UpdateFeedbackOrigin :one
+UPDATE projects
+SET feedback_origin = $3,
+    updated_at = now()
+WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at, feedback_origin
+`
+
+type UpdateFeedbackOriginParams struct {
+	ID             pgtype.UUID
+	UserID         pgtype.UUID
+	FeedbackOrigin string
+}
+
+func (q *Queries) UpdateFeedbackOrigin(ctx context.Context, arg UpdateFeedbackOriginParams) (Project, error) {
+	row := q.db.QueryRow(ctx, updateFeedbackOrigin, arg.ID, arg.UserID, arg.FeedbackOrigin)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Slug,
+		&i.Status,
+		&i.Stack,
+		&i.Summary,
+		&i.FeedbackIngestKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.FeedbackOrigin,
+	)
+	return i, err
+}
+
 const updateProject = `-- name: UpdateProject :one
 UPDATE projects
 SET name = $3,
@@ -154,7 +251,7 @@ SET name = $3,
     summary = $7,
     updated_at = now()
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at
+RETURNING id, user_id, name, slug, status, stack, summary, feedback_ingest_key, created_at, updated_at, feedback_origin
 `
 
 type UpdateProjectParams struct {
@@ -189,6 +286,7 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (P
 		&i.FeedbackIngestKey,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.FeedbackOrigin,
 	)
 	return i, err
 }
