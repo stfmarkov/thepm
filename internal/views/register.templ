@@ -1,0 +1,27 @@
+package views
+
+templ Register(csrf string, errMsg string) {
+	@Layout("Register — thepm", false, "", csrf) {
+		<h1>Create an account</h1>
+		if errMsg != "" {
+			<p role="alert">{ errMsg }</p>
+		}
+		<form method="post" action="/register">
+			<input type="hidden" name="csrf_token" value={ csrf }/>
+			<label>
+				Email
+				<input type="email" name="email" required autocomplete="username"/>
+			</label>
+			<label>
+				Password
+				<input type="password" name="password" required minlength="6" autocomplete="new-password"/>
+			</label>
+			<label>
+				Confirm password
+				<input type="password" name="password_confirm" required minlength="6" autocomplete="new-password"/>
+			</label>
+			<button type="submit">Register</button>
+		</form>
+		<p><a href="/login">Already have an account?</a></p>
+	}
+}

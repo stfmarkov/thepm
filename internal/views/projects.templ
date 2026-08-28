@@ -1,0 +1,134 @@
+package views
+
+var ProjectStatuses = []string{"active", "paused", "shipped", "archived"}
+
+type Project struct {
+	ID      string
+	Name    string
+	Slug    string
+	Status  string
+	Stack   string
+	Summary string
+}
+
+templ ProjectList(email string, csrf string, projects []Project) {
+	@Layout("Projects — thepm", true, email, csrf) {
+		<header>
+			<h1>Projects</h1>
+			<p><a href="/projects/new">New project</a></p>
+		</header>
+		if len(projects) == 0 {
+			<p>No projects yet.</p>
+		} else {
+			<div id="project-list">
+				for _, p := range projects {
+					@ProjectItem(csrf, p)
+				}
+			</div>
+		}
+	}
+}
+
+templ ProjectItem(csrf string, p Project) {
+	<article id={ "project-" + p.ID }>
+		<header>
+			<a href={ "/projects/" + p.ID }><strong>{ p.Name }</strong></a>
+			<small> { p.Status }</small>
+		</header>
+		if p.Summary != "" {
+			<p>{ p.Summary }</p>
+		}
+		<p>
+			<a href={ "/projects/" + p.ID + "/edit" }>Edit</a>
+		</p>
+		<form
+			method="post"
+			action={ "/projects/" + p.ID + "/delete" }
+			hx-post={ "/projects/" + p.ID + "/delete" }
+			hx-confirm="Delete this project?"
+			hx-target={ "#project-" + p.ID }
+			hx-swap="outerHTML"
+		>
+			<input type="hidden" name="csrf_token" value={ csrf }/>
+			<button type="submit" class="secondary">Delete</button>
+		</form>
+	</article>
+}
+
+templ ProjectNew(email string, csrf string, errMsg string, p Project) {
+	@Layout("New project — thepm", true, email, csrf) {
+		<h1>New project</h1>
+		@ProjectForm("/projects", csrf, errMsg, p, "Create")
+	}
+}
+
+templ ProjectDetail(email string, csrf string, p Project) {
+	@Layout(p.Name+" — thepm", true, email, csrf) {
+		<article>
+			<header>
+				<h1>{ p.Name }</h1>
+				<p><small>{ p.Status } · { p.Slug }</small></p>
+			</header>
+			if p.Stack != "" {
+				<p><strong>Stack</strong> { p.Stack }</p>
+			}
+			if p.Summary != "" {
+				<p>{ p.Summary }</p>
+			}
+			<p>
+				<a href={ "/projects/" + p.ID + "/edit" }>Edit</a>
+			</p>
+			<form method="post" action={ "/projects/" + p.ID + "/delete" } hx-confirm="Delete this project?">
+				<input type="hidden" name="csrf_token" value={ csrf }/>
+				<button type="submit" class="secondary">Delete</button>
+			</form>
+		</article>
+		<p><a href="/">All projects</a></p>
+	}
+}
+
+templ ProjectEdit(email string, csrf string, errMsg string, p Project) {
+	@Layout("Edit "+p.Name+" — thepm", true, email, csrf) {
+		<h1>Edit project</h1>
+		@ProjectForm("/projects/"+p.ID, csrf, errMsg, p, "Save")
+	}
+}
+
+templ ProjectForm(action string, csrf string, errMsg string, p Project, submit string) {
+	if errMsg != "" {
+		<p role="alert">{ errMsg }</p>
+	}
+	<form method="post" action={ action }>
+		<input type="hidden" name="csrf_token" value={ csrf }/>
+		<label>
+			Name
+			<input type="text" name="name" required value={ p.Name }/>
+		</label>
+		<label>
+			Slug
+			<input type="text" name="slug" value={ p.Slug } placeholder="generated from name if empty"/>
+		</label>
+		<label>
+			Status
+			<select name="status">
+				for _, st := range ProjectStatuses {
+					if st == p.Status {
+						<option value={ st } selected>{ st }</option>
+					} else {
+						<option value={ st }>{ st }</option>
+					}
+				}
+			</select>
+		</label>
+		<label>
+			Stack
+			<input type="text" name="stack" value={ p.Stack }/>
+		</label>
+		<label>
+			Summary
+			<textarea name="summary">{ p.Summary }</textarea>
+		</label>
+		<button type="submit">{ submit }</button>
+		<p><a href="/">Cancel</a></p>
+	</form>
+}

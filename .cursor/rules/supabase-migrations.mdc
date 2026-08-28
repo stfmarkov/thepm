@@ -1,0 +1,39 @@
+---
+description: Never apply Supabase migrations unless the user explicitly asks. Edit pending SQL instead of stacking files.
+alwaysApply: true
+---
+
+# Supabase migrations
+
+The user reads migration SQL and decides what runs. Do not apply schema changes on your own.
+
+## Do not run unless asked
+
+Do not run these unless the user explicitly asks in this turn:
+
+- `supabase db push`
+- `supabase db reset`
+- `supabase db query` that DDL/DML-changes the remote or local DB
+- `supabase migration repair`
+- `supabase db pull` (rewrites schema from remote)
+
+Writing or editing a file under `supabase/migrations/` is fine. Applying it is not.
+
+## One change, one file, until it is applied
+
+If the latest migration has **not** been applied yet, edit that file. Do not add a second migration that creates then drops the same table or column.
+
+```text
+# BAD — two files in one commit for the same decision
+20260825183355_init.sql          # creates public.users
+20260825185530_drop_public_users.sql
+
+# GOOD — one file that matches what we actually want
+20260825183355_init.sql          # no public.users
+```
+
+A new migration file is only for a change that comes **after** the previous one is already on the database.
+
+## After writing SQL
+
+Stop. Tell the user which file to read. Wait for them to confirm before `db push`.

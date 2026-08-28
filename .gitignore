@@ -1,0 +1,22 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Standalone recreation brief (not part of this repo)
+docs/scaffold.md
+
+# `go build ./cmd/server`, `go build -o thepm`, Air
+/thepm
+/thepm.exe
+/server
+/server.exe
+/tmp/
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# OS
+.DS_Store
+Thumbs.db

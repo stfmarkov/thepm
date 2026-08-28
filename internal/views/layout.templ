@@ -1,0 +1,40 @@
+package views
+
+templ Layout(title string, signedIn bool, email string, csrf string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title }</title>
+			<link rel="stylesheet" href="/static/pico.min.css"/>
+			<script src="/static/htmx.min.js" defer></script>
+		</head>
+		<body>
+			<header class="container">
+				<nav>
+					<ul>
+						<li><strong><a href="/">thepm</a></strong></li>
+					</ul>
+					<ul>
+						if signedIn {
+							<li><span>{ email }</span></li>
+							<li>
+								<form method="post" action="/logout">
+									<input type="hidden" name="csrf_token" value={ csrf }/>
+									<button type="submit">Sign out</button>
+								</form>
+							</li>
+						} else {
+							<li><a href="/login">Sign in</a></li>
+							<li><a href="/register">Register</a></li>
+						}
+					</ul>
+				</nav>
+			</header>
+			<main class="container">
+				{ children... }
+			</main>
+		</body>
+	</html>
+}
