@@ -83,8 +83,13 @@ func (s *Server) showProject(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
+	notes, err := s.loadProjectNotes(c, p.ID, p.UserID)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
 	u := currentUser(c)
-	Render(c, http.StatusOK, views.ProjectDetail(u.Email, csrfFrom(c), toView(p), links))
+	Render(c, http.StatusOK, views.ProjectDetail(u.Email, csrfFrom(c), toView(p), links, notes))
 }
 
 func (s *Server) editProject(c *gin.Context) {

@@ -62,7 +62,7 @@ templ ProjectNew(email string, csrf string, errMsg string, p Project) {
 	}
 }
 
-templ ProjectDetail(email string, csrf string, p Project, links []Link) {
+templ ProjectDetail(email string, csrf string, p Project, links []Link, notes []Note) {
 	@Layout(p.Name+" — thepm", true, email, csrf) {
 		<article>
 			<header>
@@ -84,6 +84,7 @@ templ ProjectDetail(email string, csrf string, p Project, links []Link) {
 			</form>
 		</article>
 		@ProjectLinks(csrf, p.ID, links, "")
+		@ProjectNotes(csrf, p.ID, notes, "")
 		<p><a href="/">All projects</a></p>
 	}
 }

@@ -69,6 +69,8 @@ func New() (*gin.Engine, error) {
 	authed.POST("/projects/:id/links", s.createLink)
 	authed.POST("/projects/:id/links/:link_id", s.updateLink)
 	authed.POST("/projects/:id/links/:link_id/delete", s.deleteLink)
+	authed.POST("/projects/:id/notes", s.createNote)
+	authed.POST("/projects/:id/notes/:note_id/delete", s.deleteNote)
 
 	return r, nil
 }

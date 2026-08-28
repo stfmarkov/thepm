@@ -182,9 +182,9 @@ All writes scoped by `user_id`. HTMX swaps the section that changed.
 
 ### 5.3 Notes
 
-- [ ] Chronological notes on the project
-- [ ] Add a note (HTMX prepend/append)
-- [ ] Delete a note
+- [x] Chronological notes on the project
+- [x] Add a note (HTMX prepend/append)
+- [x] Delete a note
 
 
 
