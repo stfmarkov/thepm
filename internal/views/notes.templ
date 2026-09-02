@@ -1,50 +1,102 @@
 package views
 
-templ ProjectNotes(csrf string, projectID string, notes []Note, errMsg string) {
+templ ProjectNotes(csrf string, projectID string, notes []Note, errMsg string, draft *Note) {
 	<section class="section" id="project-notes">
 		<h2>Notes</h2>
 		if errMsg != "" {
 			<p class="alert" role="alert">{ errMsg }</p>
 		}
-		if len(notes) == 0 {
-			<p class="empty">No notes yet.</p>
-		} else {
-			<div class="stack-tight">
-				for _, n := range notes {
-					@NoteItem(csrf, n)
-				}
-			</div>
+		<div class="note-list">
+			for _, n := range notes {
+				@NoteItem(csrf, n)
+			}
+			@NoteComposer(csrf, projectID, draft)
+		</div>
+		if len(notes) == 0 && draft == nil {
+			<p class="empty" data-notes-empty>No notes yet.</p>
+		} else if len(notes) == 0 {
+			<p class="empty" data-notes-empty hidden>No notes yet.</p>
 		}
-		@NoteAddForm(csrf, projectID)
+		if draft != nil {
+			<button type="button" class="btn-primary" data-add-note hidden>Add note</button>
+		} else {
+			<button type="button" class="btn-primary" data-add-note>Add note</button>
+		}
 	</section>
 }
 
 templ NoteItem(csrf string, n Note) {
-	<article class="row-note" id={ "note-" + n.ID }>
-		if n.CreatedAt != "" {
-			<time>{ n.CreatedAt }</time>
-		}
-		<p>{ n.Body }</p>
-		<div class="row-actions">
-			<form
-				class="inline-form"
-				method="post"
-				action={ "/projects/" + n.ProjectID + "/notes/" + n.ID + "/delete" }
-				hx-post={ "/projects/" + n.ProjectID + "/notes/" + n.ID + "/delete" }
-				hx-confirm="Delete this note?"
-				hx-target="#project-notes"
-				hx-swap="outerHTML"
-			>
-				<input type="hidden" name="csrf_token" value={ csrf }/>
-				<button type="submit" class="btn-text btn-sm btn-danger">Delete</button>
-			</form>
+	<article class="note-item" id={ "note-" + n.ID }>
+		<div class="note-grid note-view">
+			if n.CreatedAt != "" {
+				<time class="note-time">{ n.CreatedAt }</time>
+			} else {
+				<span class="note-time"></span>
+			}
+			<p class="note-body">{ n.Body }</p>
+			<div class="row-actions">
+				<button type="button" class="icon-btn" data-edit-note aria-label="Edit note" title="Edit">
+					@iconPencil()
+				</button>
+				<form
+					class="inline-form"
+					method="post"
+					action={ "/projects/" + n.ProjectID + "/notes/" + n.ID + "/delete" }
+					hx-post={ "/projects/" + n.ProjectID + "/notes/" + n.ID + "/delete" }
+					hx-confirm="Delete this note?"
+					hx-target="#project-notes"
+					hx-swap="outerHTML"
+				>
+					<input type="hidden" name="csrf_token" value={ csrf }/>
+					<button type="submit" class="icon-btn btn-danger" aria-label="Delete note" title="Delete">
+						@iconTrash()
+					</button>
+				</form>
+			</div>
 		</div>
+		<form
+			class="note-grid note-edit"
+			method="post"
+			action={ "/projects/" + n.ProjectID + "/notes/" + n.ID }
+			hx-post={ "/projects/" + n.ProjectID + "/notes/" + n.ID }
+			hx-target="#project-notes"
+			hx-swap="outerHTML"
+		>
+			<input type="hidden" name="csrf_token" value={ csrf }/>
+			if n.CreatedAt != "" {
+				<time class="note-time">{ n.CreatedAt }</time>
+			} else {
+				<span class="note-time"></span>
+			}
+			<textarea name="body" required placeholder="Note" aria-label="Note">{ n.Body }</textarea>
+			<div class="row-actions">
+				<button type="submit" class="icon-btn" aria-label="Save note" title="Save">
+					@iconCheck()
+				</button>
+				<button type="button" class="icon-btn" data-cancel-edit aria-label="Cancel editing" title="Cancel">
+					@iconClose()
+				</button>
+			</div>
+		</form>
 	</article>
 }
 
-templ NoteAddForm(csrf string, projectID string) {
+templ NoteComposer(csrf string, projectID string, draft *Note) {
+	{{ n := ComposerNote(draft) }}
+	if draft == nil {
+		<article class="note-item is-new is-editing" id="note-new" hidden>
+			@noteComposerForm(csrf, projectID, n)
+		</article>
+	} else {
+		<article class="note-item is-new is-editing" id="note-new">
+			@noteComposerForm(csrf, projectID, n)
+		</article>
+	}
+}
+
+templ noteComposerForm(csrf string, projectID string, n Note) {
 	<form
-		class="note-add"
+		class="note-grid note-edit"
 		method="post"
 		action={ "/projects/" + projectID + "/notes" }
 		hx-post={ "/projects/" + projectID + "/notes" }
@@ -52,12 +104,15 @@ templ NoteAddForm(csrf string, projectID string) {
 		hx-swap="outerHTML"
 	>
 		<input type="hidden" name="csrf_token" value={ csrf }/>
-		<label>
-			Add a note
-			<textarea name="body" required placeholder="Add a new note..."></textarea>
-		</label>
-		<div class="form-actions">
-			<button class="btn-primary" type="submit">Save note</button>
+		<span class="note-time"></span>
+		<textarea name="body" required placeholder="Note" aria-label="Note">{ n.Body }</textarea>
+		<div class="row-actions">
+			<button type="submit" class="icon-btn" aria-label="Save note" title="Save">
+				@iconCheck()
+			</button>
+			<button type="button" class="icon-btn" data-cancel-edit aria-label="Cancel adding" title="Cancel">
+				@iconClose()
+			</button>
 		</div>
 	</form>
 }

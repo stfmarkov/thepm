@@ -133,15 +133,20 @@ func toFeedbackView(f db.Feedback) views.Feedback {
 	if f.AuthorEmail.Valid {
 		email = f.AuthorEmail.String
 	}
+	receivedUnix := ""
+	if f.ReceivedAt.Valid {
+		receivedUnix = strconv.FormatInt(f.ReceivedAt.Time.Unix(), 10)
+	}
 	return views.Feedback{
-		ID:          uuidStr(f.ID),
-		ProjectID:   uuidStr(f.ProjectID),
-		AuthorName:  f.AuthorName,
-		AuthorEmail: email,
-		Message:     f.Message,
-		Rating:      rating,
-		Source:      f.Source,
-		ReceivedAt:  formatTime(f.ReceivedAt),
+		ID:           uuidStr(f.ID),
+		ProjectID:    uuidStr(f.ProjectID),
+		AuthorName:   f.AuthorName,
+		AuthorEmail:  email,
+		Message:      f.Message,
+		Rating:       rating,
+		Source:       f.Source,
+		ReceivedAt:   formatTime(f.ReceivedAt),
+		ReceivedUnix: receivedUnix,
 	}
 }
 

@@ -20,7 +20,7 @@ func (s *Server) createLink(c *gin.Context) {
 	}
 	form, errMsg := linkFromForm(c)
 	if errMsg != "" {
-		s.renderProjectLinks(c, p, http.StatusBadRequest, errMsg)
+		s.renderProjectLinks(c, p, http.StatusBadRequest, errMsg, &form)
 		return
 	}
 	_, err := s.q.CreateLink(c.Request.Context(), db.CreateLinkParams{
@@ -33,11 +33,11 @@ func (s *Server) createLink(c *gin.Context) {
 	})
 	if err != nil {
 		log.Printf("create link: %v", err)
-		s.renderProjectLinks(c, p, http.StatusInternalServerError, "Could not add the link.")
+		s.renderProjectLinks(c, p, http.StatusInternalServerError, "Could not add the link.", &form)
 		return
 	}
 	if c.GetHeader("HX-Request") != "" {
-		s.renderProjectLinks(c, p, http.StatusOK, "")
+		s.renderProjectLinks(c, p, http.StatusOK, "", nil)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/projects/"+uuidStr(p.ID))
@@ -55,7 +55,7 @@ func (s *Server) updateLink(c *gin.Context) {
 	}
 	form, errMsg := linkFromForm(c)
 	if errMsg != "" {
-		s.renderProjectLinks(c, p, http.StatusBadRequest, errMsg)
+		s.renderProjectLinks(c, p, http.StatusBadRequest, errMsg, nil)
 		return
 	}
 	_, err = s.q.UpdateLink(c.Request.Context(), db.UpdateLinkParams{
@@ -73,11 +73,11 @@ func (s *Server) updateLink(c *gin.Context) {
 			return
 		}
 		log.Printf("update link: %v", err)
-		s.renderProjectLinks(c, p, http.StatusInternalServerError, "Could not save the link.")
+		s.renderProjectLinks(c, p, http.StatusInternalServerError, "Could not save the link.", nil)
 		return
 	}
 	if c.GetHeader("HX-Request") != "" {
-		s.renderProjectLinks(c, p, http.StatusOK, "")
+		s.renderProjectLinks(c, p, http.StatusOK, "", nil)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/projects/"+uuidStr(p.ID))
@@ -108,19 +108,19 @@ func (s *Server) deleteLink(c *gin.Context) {
 		return
 	}
 	if c.GetHeader("HX-Request") != "" {
-		s.renderProjectLinks(c, p, http.StatusOK, "")
+		s.renderProjectLinks(c, p, http.StatusOK, "", nil)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/projects/"+uuidStr(p.ID))
 }
 
-func (s *Server) renderProjectLinks(c *gin.Context, p db.Project, status int, errMsg string) {
+func (s *Server) renderProjectLinks(c *gin.Context, p db.Project, status int, errMsg string, draft *views.Link) {
 	links, err := s.loadProjectLinks(c, p.ID, p.UserID)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
-	Render(c, status, views.ProjectLinks(csrfFrom(c), uuidStr(p.ID), links, errMsg))
+	Render(c, status, views.ProjectLinks(csrfFrom(c), uuidStr(p.ID), links, errMsg, draft))
 }
 
 func (s *Server) loadProjectLinks(c *gin.Context, projectID, userID pgtype.UUID) ([]views.Link, error) {
@@ -140,20 +140,19 @@ func (s *Server) loadProjectLinks(c *gin.Context, projectID, userID pgtype.UUID)
 }
 
 func linkFromForm(c *gin.Context) (views.Link, string) {
-	url := strings.TrimSpace(c.PostForm("url"))
-	kind := allowedKind(c.PostForm("kind"))
-	if url == "" {
-		return views.Link{}, "URL is required."
-	}
-	if kind == "" {
-		return views.Link{}, "Pick a valid kind."
-	}
-	return views.Link{
-		Kind:  kind,
-		URL:   url,
+	link := views.Link{
+		Kind:  allowedKind(c.PostForm("kind")),
+		URL:   strings.TrimSpace(c.PostForm("url")),
 		Label: strings.TrimSpace(c.PostForm("label")),
 		Notes: strings.TrimSpace(c.PostForm("notes")),
-	}, ""
+	}
+	if link.URL == "" {
+		return link, "URL is required."
+	}
+	if link.Kind == "" {
+		return link, "Pick a valid kind."
+	}
+	return link, ""
 }
 
 func toLinkView(l db.Link) views.Link {

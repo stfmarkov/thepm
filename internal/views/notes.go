@@ -6,3 +6,10 @@ type Note struct {
 	Body      string
 	CreatedAt string
 }
+
+func ComposerNote(draft *Note) Note {
+	if draft == nil {
+		return Note{}
+	}
+	return *draft
+}

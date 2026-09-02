@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"github.com/AdventurousNerd/thepm/internal/db"
 	"github.com/AdventurousNerd/thepm/internal/views"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -16,23 +18,60 @@ func (s *Server) createNote(c *gin.Context) {
 	if !ok {
 		return
 	}
-	body := strings.TrimSpace(c.PostForm("body"))
-	if body == "" {
-		s.renderProjectNotes(c, p, http.StatusBadRequest, "Note cannot be empty.")
+	form, errMsg := noteFromForm(c)
+	if errMsg != "" {
+		s.renderProjectNotes(c, p, http.StatusBadRequest, errMsg, &form)
 		return
 	}
 	_, err := s.q.CreateNote(c.Request.Context(), db.CreateNoteParams{
 		UserID:    p.UserID,
 		ProjectID: p.ID,
-		Body:      body,
+		Body:      form.Body,
 	})
 	if err != nil {
 		log.Printf("create note: %v", err)
-		s.renderProjectNotes(c, p, http.StatusInternalServerError, "Could not add the note.")
+		s.renderProjectNotes(c, p, http.StatusInternalServerError, "Could not add the note.", &form)
 		return
 	}
 	if c.GetHeader("HX-Request") != "" {
-		s.renderProjectNotes(c, p, http.StatusOK, "")
+		s.renderProjectNotes(c, p, http.StatusOK, "", nil)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/projects/"+uuidStr(p.ID))
+}
+
+func (s *Server) updateNote(c *gin.Context) {
+	p, ok := s.loadOwnedProject(c)
+	if !ok {
+		return
+	}
+	noteID, err := parseUUID(c.Param("note_id"))
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	form, errMsg := noteFromForm(c)
+	if errMsg != "" {
+		s.renderProjectNotes(c, p, http.StatusBadRequest, errMsg, nil)
+		return
+	}
+	_, err = s.q.UpdateNote(c.Request.Context(), db.UpdateNoteParams{
+		ID:        noteID,
+		ProjectID: p.ID,
+		UserID:    p.UserID,
+		Body:      form.Body,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		log.Printf("update note: %v", err)
+		s.renderProjectNotes(c, p, http.StatusInternalServerError, "Could not save the note.", nil)
+		return
+	}
+	if c.GetHeader("HX-Request") != "" {
+		s.renderProjectNotes(c, p, http.StatusOK, "", nil)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/projects/"+uuidStr(p.ID))
@@ -63,19 +102,19 @@ func (s *Server) deleteNote(c *gin.Context) {
 		return
 	}
 	if c.GetHeader("HX-Request") != "" {
-		s.renderProjectNotes(c, p, http.StatusOK, "")
+		s.renderProjectNotes(c, p, http.StatusOK, "", nil)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/projects/"+uuidStr(p.ID))
 }
 
-func (s *Server) renderProjectNotes(c *gin.Context, p db.Project, status int, errMsg string) {
+func (s *Server) renderProjectNotes(c *gin.Context, p db.Project, status int, errMsg string, draft *views.Note) {
 	notes, err := s.loadProjectNotes(c, p.ID, p.UserID)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
-	Render(c, status, views.ProjectNotes(csrfFrom(c), uuidStr(p.ID), notes, errMsg))
+	Render(c, status, views.ProjectNotes(csrfFrom(c), uuidStr(p.ID), notes, errMsg, draft))
 }
 
 func (s *Server) loadProjectNotes(c *gin.Context, projectID, userID pgtype.UUID) ([]views.Note, error) {
@@ -92,6 +131,16 @@ func (s *Server) loadProjectNotes(c *gin.Context, projectID, userID pgtype.UUID)
 		out = append(out, toNoteView(n))
 	}
 	return out, nil
+}
+
+func noteFromForm(c *gin.Context) (views.Note, string) {
+	note := views.Note{
+		Body: strings.TrimSpace(c.PostForm("body")),
+	}
+	if note.Body == "" {
+		return note, "Note cannot be empty."
+	}
+	return note, ""
 }
 
 func toNoteView(n db.Note) views.Note {

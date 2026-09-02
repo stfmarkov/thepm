@@ -98,9 +98,9 @@ templ ProjectDetail(email string, csrf string, p Project, links []Link, notes []
 			</div>
 		</section>
 		<hr class="section-rule"/>
-		@ProjectLinks(csrf, p.ID, links, "")
+		@ProjectLinks(csrf, p.ID, links, "", nil)
 		<hr class="section-rule"/>
-		@ProjectNotes(csrf, p.ID, notes, "")
+		@ProjectNotes(csrf, p.ID, notes, "", nil)
 		<hr class="section-rule"/>
 		@ProjectFeedback(csrf, p, feedback, "")
 	}

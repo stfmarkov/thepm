@@ -91,3 +91,35 @@ func (q *Queries) ListProjectNotes(ctx context.Context, arg ListProjectNotesPara
 	}
 	return items, nil
 }
+
+const updateNote = `-- name: UpdateNote :one
+UPDATE notes
+SET body = $4
+WHERE id = $1 AND project_id = $2 AND user_id = $3
+RETURNING id, user_id, project_id, body, created_at
+`
+
+type UpdateNoteParams struct {
+	ID        pgtype.UUID
+	ProjectID pgtype.UUID
+	UserID    pgtype.UUID
+	Body      string
+}
+
+func (q *Queries) UpdateNote(ctx context.Context, arg UpdateNoteParams) (Note, error) {
+	row := q.db.QueryRow(ctx, updateNote,
+		arg.ID,
+		arg.ProjectID,
+		arg.UserID,
+		arg.Body,
+	)
+	var i Note
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ProjectID,
+		&i.Body,
+		&i.CreatedAt,
+	)
+	return i, err
+}

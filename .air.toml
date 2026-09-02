@@ -5,9 +5,9 @@ tmp_dir = "tmp"
   bin = "tmp/main.exe"
   cmd = "go build -o ./tmp/main.exe ./cmd/server"
   delay = 500
-  exclude_dir = ["tmp", "vendor", "static", "docs", "supabase"]
-  exclude_regex = ["_templ.go"]
-  include_ext = ["go", "templ"]
+  exclude_dir = ["tmp", "vendor", "docs", "supabase"]
+  exclude_regex = ["_templ.go", "htmx.min.js"]
+  include_ext = ["go", "templ", "css", "js"]
   pre_cmd = ["templ generate"]
   stop_on_error = true
 

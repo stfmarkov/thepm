@@ -75,6 +75,7 @@ func New() (*gin.Engine, error) {
 	authed.POST("/projects/:id/links/:link_id", s.updateLink)
 	authed.POST("/projects/:id/links/:link_id/delete", s.deleteLink)
 	authed.POST("/projects/:id/notes", s.createNote)
+	authed.POST("/projects/:id/notes/:note_id", s.updateNote)
 	authed.POST("/projects/:id/notes/:note_id/delete", s.deleteNote)
 	authed.POST("/projects/:id/feedback", s.createFeedback)
 	authed.POST("/projects/:id/feedback/:feedback_id/delete", s.deleteFeedback)

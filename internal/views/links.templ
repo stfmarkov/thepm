@@ -1,38 +1,44 @@
 package views
 
-templ ProjectLinks(csrf string, projectID string, links []Link, errMsg string) {
+templ ProjectLinks(csrf string, projectID string, links []Link, errMsg string, draft *Link) {
 	<section class="section" id="project-links">
 		<h2>Links</h2>
 		if errMsg != "" {
 			<p class="alert" role="alert">{ errMsg }</p>
 		}
-		if len(links) == 0 {
-			<p class="empty">No links yet.</p>
-		} else {
-			<div class="stack">
-				for _, g := range GroupLinks(links) {
-					<div class="group">
-						<h3>{ LinkKindLabel(g.Kind) }</h3>
-						<div class="row-list">
-							for _, l := range g.Links {
-								@LinkItem(csrf, l)
-							}
-						</div>
-					</div>
-				}
-			</div>
+		<div class="link-list">
+			for _, l := range links {
+				@LinkItem(csrf, l)
+			}
+			@LinkComposer(csrf, projectID, draft)
+		</div>
+		if len(links) == 0 && draft == nil {
+			<p class="empty" data-links-empty>No links yet.</p>
+		} else if len(links) == 0 {
+			<p class="empty" data-links-empty hidden>No links yet.</p>
 		}
-		@LinkAddForm(csrf, projectID)
+		if draft != nil {
+			<button type="button" class="btn-primary" data-add-link hidden>Add link</button>
+		} else {
+			<button type="button" class="btn-primary" data-add-link>Add link</button>
+		}
 	</section>
 }
 
 templ LinkItem(csrf string, l Link) {
-	<article class="item-block" id={ "link-" + l.ID }>
-		<div class="row">
-			<div class="row-main">
-				<a class="row-title" href={ LinkHref(l.URL) }>{ LinkTitle(l) }</a>
-			</div>
+	<article class="link-item" id={ "link-" + l.ID }>
+		<div class="link-grid link-view">
+			if l.Label != "" {
+				<span class="link-label">{ l.Label }</span>
+			} else {
+				<span class="link-label is-empty">—</span>
+			}
+			<a class="link-url" href={ LinkHref(l.URL) } title={ l.URL }>{ l.URL }</a>
+			<span class="chip link-kind">{ LinkKindLabel(l.Kind) }</span>
 			<div class="row-actions">
+				<button type="button" class="icon-btn" data-edit-link aria-label="Edit link" title="Edit">
+					@iconPencil()
+				</button>
 				<form
 					class="inline-form"
 					method="post"
@@ -43,60 +49,58 @@ templ LinkItem(csrf string, l Link) {
 					hx-swap="outerHTML"
 				>
 					<input type="hidden" name="csrf_token" value={ csrf }/>
-					<button type="submit" class="btn-text btn-sm btn-danger">Delete</button>
+					<button type="submit" class="icon-btn btn-danger" aria-label="Delete link" title="Delete">
+						@iconTrash()
+					</button>
 				</form>
 			</div>
+			if l.Notes != "" {
+				<p class="muted link-note">{ l.Notes }</p>
+			}
 		</div>
-		if l.Notes != "" {
-			<p class="muted">{ l.Notes }</p>
-		}
-		<details>
-			<summary class="btn-text btn-sm">Edit</summary>
-			<form
-				class="stack edit-panel"
-				method="post"
-				action={ "/projects/" + l.ProjectID + "/links/" + l.ID }
-				hx-post={ "/projects/" + l.ProjectID + "/links/" + l.ID }
-				hx-confirm="Save this link?"
-				hx-target="#project-links"
-				hx-swap="outerHTML"
-			>
-				<input type="hidden" name="csrf_token" value={ csrf }/>
-				<label>
-					Kind
-					<select name="kind">
-						for _, k := range LinkKinds {
-							if k == l.Kind {
-								<option value={ k } selected>{ LinkKindLabel(k) }</option>
-							} else {
-								<option value={ k }>{ LinkKindLabel(k) }</option>
-							}
-						}
-					</select>
-				</label>
-				<label>
-					URL
-					<input type="text" name="url" required value={ l.URL }/>
-				</label>
-				<label>
-					Label
-					<input type="text" name="label" value={ l.Label }/>
-				</label>
-				<label>
-					Notes
-					<textarea name="notes">{ l.Notes }</textarea>
-				</label>
-				<div class="form-actions">
-					<button class="btn-primary" type="submit">Save</button>
-				</div>
-			</form>
-		</details>
+		<form
+			class="link-grid link-edit"
+			method="post"
+			action={ "/projects/" + l.ProjectID + "/links/" + l.ID }
+			hx-post={ "/projects/" + l.ProjectID + "/links/" + l.ID }
+			hx-target="#project-links"
+			hx-swap="outerHTML"
+		>
+			<input type="hidden" name="csrf_token" value={ csrf }/>
+			<input type="text" name="label" value={ l.Label } placeholder="Label" aria-label="Label"/>
+			<input type="text" name="url" required value={ l.URL } placeholder="https://" aria-label="URL"/>
+			<select name="kind" aria-label="Type">
+				@linkKindOptions(l.Kind)
+			</select>
+			<div class="row-actions">
+				<button type="submit" class="icon-btn" aria-label="Save link" title="Save">
+					@iconCheck()
+				</button>
+				<button type="button" class="icon-btn" data-cancel-edit aria-label="Cancel editing" title="Cancel">
+					@iconClose()
+				</button>
+			</div>
+			<textarea name="notes" placeholder="Note" aria-label="Note">{ l.Notes }</textarea>
+		</form>
 	</article>
 }
 
-templ LinkAddForm(csrf string, projectID string) {
+templ LinkComposer(csrf string, projectID string, draft *Link) {
+	{{ l := ComposerLink(draft) }}
+	if draft == nil {
+		<article class="link-item is-new is-editing" id="link-new" hidden>
+			@linkComposerForm(csrf, projectID, l)
+		</article>
+	} else {
+		<article class="link-item is-new is-editing" id="link-new">
+			@linkComposerForm(csrf, projectID, l)
+		</article>
+	}
+}
+
+templ linkComposerForm(csrf string, projectID string, l Link) {
 	<form
-		class="inline-fields link-add"
+		class="link-grid link-edit"
 		method="post"
 		action={ "/projects/" + projectID + "/links" }
 		hx-post={ "/projects/" + projectID + "/links" }
@@ -104,26 +108,57 @@ templ LinkAddForm(csrf string, projectID string) {
 		hx-swap="outerHTML"
 	>
 		<input type="hidden" name="csrf_token" value={ csrf }/>
-		<label>
-			Kind
-			<select name="kind">
-				for _, k := range LinkKinds {
-					<option value={ k }>{ LinkKindLabel(k) }</option>
-				}
-			</select>
-		</label>
-		<label>
-			Label
-			<input type="text" name="label" placeholder="URL label"/>
-		</label>
-		<label>
-			URL
-			<input type="text" name="url" required placeholder="https://"/>
-		</label>
-		<button class="btn-primary" type="submit">Add link</button>
-		<label class="span-2">
-			Notes
-			<textarea name="notes"></textarea>
-		</label>
+		<input type="text" name="label" value={ l.Label } placeholder="Label" aria-label="Label"/>
+		<input type="text" name="url" required value={ l.URL } placeholder="https://" aria-label="URL"/>
+		<select name="kind" aria-label="Type">
+			@linkKindOptions(l.Kind)
+		</select>
+		<div class="row-actions">
+			<button type="submit" class="icon-btn" aria-label="Save link" title="Save">
+				@iconCheck()
+			</button>
+			<button type="button" class="icon-btn" data-cancel-edit aria-label="Cancel adding" title="Cancel">
+				@iconClose()
+			</button>
+		</div>
+		<textarea name="notes" placeholder="Note" aria-label="Note">{ l.Notes }</textarea>
 	</form>
+}
+
+templ linkKindOptions(selected string) {
+	for _, k := range LinkKinds {
+		if k == selected {
+			<option value={ k } selected>{ LinkKindLabel(k) }</option>
+		} else {
+			<option value={ k }>{ LinkKindLabel(k) }</option>
+		}
+	}
+}
+
+templ iconPencil() {
+	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
+		<path d="m15 5 4 4"></path>
+	</svg>
+}
+
+templ iconTrash() {
+	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<path d="M3 6h18"></path>
+		<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+		<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+	</svg>
+}
+
+templ iconCheck() {
+	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<path d="M20 6 9 17l-5-5"></path>
+	</svg>
+}
+
+templ iconClose() {
+	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<path d="M18 6 6 18"></path>
+		<path d="m6 6 12 12"></path>
+	</svg>
 }

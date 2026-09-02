@@ -2,6 +2,7 @@ package views
 
 templ ProjectFeedback(csrf string, p Project, items []Feedback, errMsg string) {
 	<section class="section" id="project-feedback">
+		{{ stats := FeedbackRatingStatsFrom(items) }}
 		<h2>Feedback inbox</h2>
 		if errMsg != "" {
 			<p class="alert" role="alert">{ errMsg }</p>
@@ -11,7 +12,25 @@ templ ProjectFeedback(csrf string, p Project, items []Feedback, errMsg string) {
 		if len(items) == 0 {
 			<p class="empty">No feedback yet.</p>
 		} else {
-			<div class="row-list">
+			<div class="feedback-toolbar">
+				if stats.Count > 0 {
+					<div class="feedback-stats">
+						<span class="chip chip-rating">{ stats.Average }/5</span>
+						<span class="muted">{ stats.CountLabel() }</span>
+					</div>
+				}
+				<div class="feedback-sort" role="group" aria-label="Sort feedback">
+					<span class="kicker">Sort</span>
+					for _, opt := range FeedbackSorts {
+						if opt.Value == "newest" {
+							<button type="button" class="btn-text btn-sm is-active" data-feedback-sort={ opt.Value } aria-pressed="true">{ opt.Label }</button>
+						} else {
+							<button type="button" class="btn-text btn-sm" data-feedback-sort={ opt.Value } aria-pressed="false">{ opt.Label }</button>
+						}
+					}
+				</div>
+			</div>
+			<div class="row-list" data-feedback-list>
 				for _, f := range items {
 					@FeedbackItem(csrf, f)
 				}
@@ -71,7 +90,7 @@ templ FeedbackIngest(csrf string, p Project) {
 }
 
 templ FeedbackItem(csrf string, f Feedback) {
-	<article class="feedback-item" id={ "feedback-" + f.ID }>
+	<article class="feedback-item" id={ "feedback-" + f.ID } data-rating={ f.Rating } data-received={ f.ReceivedUnix }>
 		<header>
 			<span class={ FeedbackSourceClass(f.Source) }>{ f.Source }</span>
 			<strong>{ f.AuthorName }</strong>

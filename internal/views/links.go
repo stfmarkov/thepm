@@ -26,25 +26,6 @@ type Link struct {
 	Notes     string
 }
 
-type LinkGroup struct {
-	Kind  string
-	Links []Link
-}
-
-func GroupLinks(links []Link) []LinkGroup {
-	buckets := make(map[string][]Link, len(LinkKinds))
-	for _, l := range links {
-		buckets[l.Kind] = append(buckets[l.Kind], l)
-	}
-	groups := make([]LinkGroup, 0, len(LinkKinds))
-	for _, k := range LinkKinds {
-		if items := buckets[k]; len(items) > 0 {
-			groups = append(groups, LinkGroup{Kind: k, Links: items})
-		}
-	}
-	return groups
-}
-
 func LinkKindLabel(kind string) string {
 	if s, ok := linkKindLabels[kind]; ok {
 		return s
@@ -64,9 +45,13 @@ func LinkHref(raw string) templ.SafeURL {
 	return templ.SafeURL("https://" + u)
 }
 
-func LinkTitle(l Link) string {
-	if s := strings.TrimSpace(l.Label); s != "" {
-		return s
+func ComposerLink(draft *Link) Link {
+	if draft == nil {
+		return Link{Kind: LinkKinds[0]}
 	}
-	return l.URL
+	out := *draft
+	if out.Kind == "" {
+		out.Kind = LinkKinds[0]
+	}
+	return out
 }

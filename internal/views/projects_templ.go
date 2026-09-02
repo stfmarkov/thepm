@@ -541,7 +541,7 @@ func ProjectDetail(email string, csrf string, p Project, links []Link, notes []N
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = ProjectLinks(csrf, p.ID, links, "").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ProjectLinks(csrf, p.ID, links, "", nil).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -549,7 +549,7 @@ func ProjectDetail(email string, csrf string, p Project, links []Link, notes []N
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = ProjectNotes(csrf, p.ID, notes, "").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ProjectNotes(csrf, p.ID, notes, "", nil).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
