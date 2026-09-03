@@ -35,16 +35,18 @@ func New() (*gin.Engine, error) {
 		return nil, err
 	}
 
+	applyGinMode()
+
 	s := &Server{
 		auth:    auth.NewClient(baseURL, anonKey),
-		cookies: auth.CookieConfig{Secure: os.Getenv("COOKIE_SECURE") == "true"},
+		cookies: auth.CookieConfig{Secure: cookieSecure()},
 		limit:   newIPLimiter(),
 		q:       db.New(pool),
 	}
 
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
-	_ = r.SetTrustedProxies(nil)
+	trustProxies(r)
 
 	r.StaticFS("/static", http.FS(static.FS))
 	r.GET("/health", health)

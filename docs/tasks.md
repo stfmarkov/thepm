@@ -228,9 +228,9 @@ Unauthenticated JSON. Called by forms on other apps. Field names can stay flexib
 
 ## 6. Hardening and first deploy
 
-- [ ] Secure cookies, HTTPS
+- [x] Secure cookies, HTTPS (Secure cookies on Render; TLS is the platform)
 - [ ] Confirm register, login, and logout on the production origin
-- [ ] Deploy the Go binary (Fly, Railway, Render, or a VPS — decide at deploy time)
+- [ ] Deploy the Go binary on Render (`go build -o thepm ./cmd/server`, start `./thepm`, health `/health`)
 - [ ] `SUPABASE_POOLER_STRING` is set so boot can fall back on IPv4-only networks
 - [ ] Smoke test: two browsers, two users, no cross-visible rows
 - [ ] Smoke test: POST ingest with a real project id + key from another origin; row appears in the inbox

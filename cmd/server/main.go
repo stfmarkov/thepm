@@ -5,6 +5,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	httpx "github.com/AdventurousNerd/thepm/internal/http"
 	"github.com/joho/godotenv"
@@ -13,10 +14,7 @@ import (
 func main() {
 	_ = godotenv.Load()
 
-	addr := os.Getenv("ADDR")
-	if addr == "" {
-		addr = ":8080"
-	}
+	addr := listenAddr()
 
 	engine, err := httpx.New()
 	if err != nil {
@@ -27,4 +25,18 @@ func main() {
 	if err := engine.Run(addr); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// Render sets PORT (a bare number). Locally we use ADDR (":8090").
+func listenAddr() string {
+	if p := strings.TrimSpace(os.Getenv("PORT")); p != "" {
+		if !strings.HasPrefix(p, ":") {
+			p = ":" + p
+		}
+		return p
+	}
+	if a := strings.TrimSpace(os.Getenv("ADDR")); a != "" {
+		return a
+	}
+	return ":8080"
 }
