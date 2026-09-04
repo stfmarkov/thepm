@@ -50,6 +50,7 @@ func New() (*gin.Engine, error) {
 
 	r.StaticFS("/static", http.FS(static.FS))
 	r.GET("/health", health)
+	r.HEAD("/health", health)
 
 	ingest := r.Group("/api/v1/projects/:project_id/feedback")
 	ingest.Use(s.ingestCORS, s.limitIngest)
